@@ -4,9 +4,9 @@ import javax.swing.JComponent;
 
 
 public class Painter extends JComponent{
-	AutoAlgo1 algo;
+	AutoDrone algo;
 	
-	public Painter(AutoAlgo1 algo) {
+	public Painter(AutoDrone algo) {
 		this.algo = algo;
 	}
 	

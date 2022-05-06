@@ -9,18 +9,12 @@ public class AutoAlgo1 {
 	PixelState map[][];
 	Drone drone;
 	Point droneStartingPoint;
-	
 	ArrayList<Point> points;
-	
-	
 	int isRotating;
 	ArrayList<Double> degrees_left;
 	ArrayList<Func> degrees_left_func;
-	
 	boolean isSpeedUp = false;
-	
 	Graph mGraph = new Graph();
-	
 	CPU ai_cpu;
 	public AutoAlgo1(Map realMap) {
 		degrees_left = new ArrayList<>();
@@ -31,7 +25,6 @@ public class AutoAlgo1 {
 		drone.addLidar(0);
 		drone.addLidar(90);
 		drone.addLidar(-90);
-
 		
 		initMap();
 		
@@ -60,10 +53,7 @@ public class AutoAlgo1 {
 	public void update(int deltaTime) {
 		updateVisited();
 		updateMapByLidars();
-		
 		ai(deltaTime);
-		
-		
 		if(isRotating != 0) {
 			updateRotating(deltaTime);
 		}
@@ -72,7 +62,6 @@ public class AutoAlgo1 {
 		} else {
 			drone.slowDown(deltaTime);
 		}
-		
 	}
 	
 	public void speedUp() {
@@ -232,7 +221,7 @@ public class AutoAlgo1 {
 	
 	
 	boolean is_risky = false;
-	int max_risky_distance = 150;
+	int max_risky_distance = 100; // we changed here to 100 from 150
 	boolean try_to_escape = false;
 	double  risky_dis = 0;
 	int max_angle_risky = 10;
@@ -244,14 +233,14 @@ public class AutoAlgo1 {
 	double max_distance_between_points = 100;
 	
 	boolean start_return_home = false;
-	
+
+
 	Point init_point;
 	public void ai(int deltaTime) {
 		if(!SimulationWindow.toogleAI) {
 			return;
 		}
-	
-		
+
 		if(is_init) {
 			speedUp();
 			Point dronePoint = drone.getOpticalSensorLocation();
@@ -270,9 +259,10 @@ public class AutoAlgo1 {
 
 		
 		if(SimulationWindow.return_home) {
-			
-			if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points) {
-				if(points.size() <= 1 && Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/5) {
+			// if the "Step" is good step..
+			if(Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points) {
+				// If the size of the points array is lower than 1- speed down because there is no points..
+				if(points.size() <= 1 && Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/10) { // we changed here to /10
 					speedDown();
 				} else {
 					removeLastPoint();
@@ -284,18 +274,19 @@ public class AutoAlgo1 {
 				mGraph.addVertex(dronePoint);
 			}
 		}
-	
-		
-		
+
 		if(!is_risky) {
+
+			// updating the current distance between the drone and the front-wall
 			Lidar lidar = drone.lidars.get(0);
+
+//			if(lidar.current_distance >= )
+
 			if(lidar.current_distance <= max_risky_distance ) {
 				is_risky = true;
 				risky_dis = lidar.current_distance;
-				
 			}
-			
-			
+
 			Lidar lidar1 = drone.lidars.get(1);
 			if(lidar1.current_distance <= max_risky_distance/3 ) {
 				is_risky = true;
@@ -307,6 +298,7 @@ public class AutoAlgo1 {
 			}
 			
 		} else {
+			// risky and you are not trying to escape- Try to escape!!!!
 			if(!try_to_escape) {
 				try_to_escape = true;
 				Lidar lidar1 = drone.lidars.get(1);
@@ -314,12 +306,8 @@ public class AutoAlgo1 {
 				
 				Lidar lidar2 = drone.lidars.get(2);
 				double b = lidar2.current_distance;
-				
-				
-				
+
 				int spin_by = max_angle_risky;
-			
-			
 				
 				if(a > 270 && b > 270) {
 					is_lidars_max = true;
@@ -341,25 +329,23 @@ public class AutoAlgo1 {
 					}
 					
 					spin_by = 90;
+
+					// take the back side
 					if(SimulationWindow.return_home) {
 						spin_by *= -1;
 					}
 					
-					
+					// take the left side <<
 					if(dis_to_lidar1 < dis_to_lidar2) {
-						
 						spin_by *= (-1 ); 
 					}
 				} else {
-					
-					
+					// take the right side >>
 					if(a < b ) {
 						spin_by *= (-1 ); 
 					}
 				}
-				
-				
-				
+
 				spinBy(spin_by,true,new Func() { 
 						@Override
 						public void method() {
@@ -393,7 +379,7 @@ public class AutoAlgo1 {
 	
 	double lastGyroRotation = 0;
 	public void updateRotating(int deltaTime) {
-		
+
 		if(degrees_left.size() == 0) {
 			return;
 		}
@@ -453,8 +439,6 @@ public class AutoAlgo1 {
 		if(isFirst) {
 			degrees_left.add(0,degrees);
 			degrees_left_func.add(0,func);
-		
-			
 		} else {
 			degrees_left.add(degrees);
 			degrees_left_func.add(func);
@@ -485,7 +469,8 @@ public class AutoAlgo1 {
 		degrees_left_func.add(null);
 		isRotating = 1;
 	}
-	
+
+	// Getting the last point if exists
 	public Point getLastPoint() {
 		if(points.size() == 0) {
 			return init_point;
@@ -494,12 +479,12 @@ public class AutoAlgo1 {
 		Point p1 = points.get(points.size()-1);
 		return p1;
 	}
-	
+
+	// Removing the last point if exists
 	public Point removeLastPoint() {
 		if(points.isEmpty()) {
 			return init_point;
 		}
-		
 		return points.remove(points.size()-1);
 	}
 	

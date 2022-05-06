@@ -15,26 +15,31 @@ public class Drone {
 	private Point pointFromStart;
 	public Point startPoint;
 	public List<Lidar> lidars;
-	private String drone_img_path = "D:\\Tests\\drone_3_pixels.png";
+	private String drone_img_path = "C:\\Users\\עומרי\\IdeaProjects\\DroneSimulator\\Maps\\drone_3_pixels.png";
 	public Map realMap;
 	private double rotation;
 	private double speed;
 	private CPU cpu;
-	
+	private PID pid;
+
 	public Drone(Map realMap) {
+		// Locations
 		this.realMap = realMap;
-		
 		this.startPoint = realMap.drone_start_point;
 		pointFromStart = new Point();
+
+		// Sensor
 		sensorOpticalFlow = new Point();
 		lidars = new ArrayList<>();
-
 		speed = 0.2;
-		
 		rotation = 0;
 		gyroRotation = rotation;
-		
-		cpu = new CPU(100,"Drone");
+
+		// PID
+		pid = new PID(0,0,0,10);
+
+		// CPU
+		cpu = new CPU(10,"Drone");
 	}
 	
 	public void play() {
@@ -59,15 +64,16 @@ public class Drone {
 	}
 	
 	public void update(int deltaTime) {
-
 		double distancedMoved = (speed*100)*((double)deltaTime/1000);
-		
 		pointFromStart =  Tools.getPointByDistance(pointFromStart, rotation, distancedMoved);
-		
 		double noiseToDistance = Tools.noiseBetween(WorldParams.min_motion_accuracy,WorldParams.max_motion_accuracy,false);
+
+		// Setting "This" location by the drone's sensor
 		sensorOpticalFlow = Tools.getPointByDistance(sensorOpticalFlow, rotation, distancedMoved*noiseToDistance);
-		
+
+		// Setting the "noise"
 		double noiseToRotation = Tools.noiseBetween(WorldParams.min_rotation_accuracy,WorldParams.max_rotation_accuracy,false);
+
 		double milli_per_minute = 60000;
 		gyroRotation += (1-noiseToRotation)*deltaTime/milli_per_minute;
 		gyroRotation = formatRotation(gyroRotation);
@@ -144,10 +150,7 @@ public class Drone {
 		}
 		//Point p = getPointOnMap();
 		//g.drawImage(mImage,p.getX(),p.getY(),mImage.getWidth(),mImage.getHeight());
-		
-		
-		
-		
+
 		for(int i=0;i<lidars.size();i++) {
 			Lidar lidar = lidars.get(i);
 			lidar.paint(g);

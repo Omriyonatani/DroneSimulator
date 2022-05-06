@@ -22,17 +22,17 @@ public class Graph {
     public Graph() {
     	g = new DefaultDirectedGraph<Point, DefaultEdge>(DefaultEdge.class);
     }
-    public void addVertex(Point name) {
+    public void addVertex(Point newPoint) {
         Point last_vertex = null;
         Set<Point> all = g.vertexSet();
         
         if(all.size() > 0) {
         	last_vertex = getLastElement(all);
         }
-        g.addVertex(name);
+        g.addVertex(newPoint);
         if(last_vertex != null) 
-        	g.addEdge(last_vertex, name);
-        //graph.addVertex(name);
+        	g.addEdge(last_vertex, newPoint);
+        //graph.addVertex(newPoint);
     }
     
     public Point getLastElement(Set<Point> c) {
