@@ -6,6 +6,7 @@ public class AutoDrone {
 
     int map_size = 3000;
     enum PixelState {blocked,explored,unexplored,visited};
+    ArrayList<Operation> Operations = new ArrayList<Operation>();
     PixelState map[][];
     Drone drone;
     Point droneStartingPoint;
@@ -64,7 +65,7 @@ public class AutoDrone {
             }
         }
 
-        droneStartingPoint = new Point(map_size/2,map_size/2);
+        droneStartingPoint = new Point(map_size/2,map_size/2,drone.getGyroRotation());
     }
 
     public void play() {
@@ -96,7 +97,7 @@ public class AutoDrone {
 
     public void updateMapByLidars() {
         Point dronePoint = drone.getOpticalSensorLocation();
-        Point fromPoint = new Point(dronePoint.x + droneStartingPoint.x,dronePoint.y + droneStartingPoint.y);
+        Point fromPoint = new Point(dronePoint.x + droneStartingPoint.x,dronePoint.y + droneStartingPoint.y, drone.getGyroRotation());
 
         for(int i=0;i<drone.lidars.size();i++) {
             Lidar lidar = drone.lidars.get(i);
@@ -117,7 +118,7 @@ public class AutoDrone {
 
     public void updateVisited() {
         Point dronePoint = drone.getOpticalSensorLocation();
-        Point fromPoint = new Point(dronePoint.x + droneStartingPoint.x,dronePoint.y + droneStartingPoint.y);
+        Point fromPoint = new Point(dronePoint.x + droneStartingPoint.x,dronePoint.y + droneStartingPoint.y,drone.getGyroRotation());
 
         setPixel(fromPoint.x,fromPoint.y,PixelState.visited);
 
@@ -188,9 +189,17 @@ public class AutoDrone {
         if (!SimulationWindow.toogleAI) {
             return;
         }
+
+        if(!Operations.get(0).isFinished(drone.getOpticalSensorLocation())){
+            return;
+        }else{
+            Operations.remove(0);
+        }
+
         Lidar lidarF = drone.lidars.get(0);
         speedUp();
 
+        // if the Lidar is getting low distance- check right and left options
         if (lidarF.getDistance(deltaTime) < maxLidarDistance) {
 //            speedDown();
             Lidar lidarR = drone.lidars.get(1);
@@ -199,25 +208,89 @@ public class AutoDrone {
             Lidar lidarL = drone.lidars.get(2);
             double left = lidarL.current_distance;
 
+
+            // find max Front, Left and Right
+            if (lidarR.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
+                if (lidarF.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
+                    spinBy(-45); // left
+                    Point newPoint = new Point(drone.getOpticalSensorLocation());
+                    newPoint.orient -= 45;
+                    Operation op = new Operation(OperationType.rotating,newPoint);
+                    Operations.add(op);
+                }
+            }else if (lidarF.getDistance(deltaTime) < lidarR.getDistance(deltaTime)){
+                spinBy(45);
+                Point newPoint = new Point(drone.getOpticalSensorLocation());
+                newPoint.orient += 45;
+                Operation op = new Operation(OperationType.rotating,newPoint);
+                Operations.add(op);
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // Find the max distance direction (Front, Left, Right)
             if (lidarF.getDistance(deltaTime) > lidarR.getDistance(deltaTime)) {
                 if (lidarF.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
-                    spinBy(-90); // take left
+                    spinBy(-45); // take left
+                    Point dronePoint = drone.getOpticalSensorLocation();
+                    // update the Points arr
+                    points.add(dronePoint);
+                    mGraph.addVertex(dronePoint);
                 }
                 // stay front
+                // continue straight 1 Meter
+                Point dronePoint = drone.getOpticalSensorLocation();
+                Point nextPoint = new Point(dronePoint.x + 100, dronePoint.y,drone.getGyroRotation()); // go 1 Meters to the front
+                // update the Points arr
+                points.add(dronePoint);
+                mGraph.addVertex(dronePoint);
+
             } else {
                 if (lidarR.getDistance(deltaTime) > lidarL.getDistance(deltaTime)) {
-                    spinBy(90); // take right
+                    spinBy(45); // take right
+                    Point dronePoint = drone.getOpticalSensorLocation();
+                    // update the Points arr
+                    points.add(dronePoint);
+                    mGraph.addVertex(dronePoint);
                 } else {
-                    spinBy(-90); // take left
+                    spinBy(-45); // take left
+                    Point dronePoint = drone.getOpticalSensorLocation();
+                    // update the Points arr
+                    points.add(dronePoint);
+                    mGraph.addVertex(dronePoint);
+
                 }
             }
-        } else {
-            Point dronePoint = drone.getOpticalSensorLocation();
-            Point nextPoint = new Point(dronePoint.x + 250, dronePoint.y); // go 2.5 Meters to the front
-            Point thisPoint = new Point(dronePoint);
-            points.add(dronePoint);
-            mGraph.addVertex(dronePoint);
-        }
+        }  //else {
+////            // continue straight 2.5 Meters..
+////            Point dronePoint = drone.getOpticalSensorLocation();
+////            Point nextPoint = new Point(dronePoint.x + 250, dronePoint.y,drone.getGyroRotation()); // go 2.5 Meters to the front
+////            Point thisPoint = new Point(dronePoint);
+////            // update the Points arr
+////            points.add(dronePoint);
+////            mGraph.addVertex(dronePoint);
+//        }
     }
 //
 //        if(is_init) {
@@ -468,7 +541,7 @@ public class AutoDrone {
 
         Point p1 = points.get(points.size()-1);
         Point p2 = points.get(points.size()-2);
-        return new Point((p1.x + p2.x) /2, (p1.y + p2.y) /2);
+        return new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2,drone.getGyroRotation());
     }
 
 

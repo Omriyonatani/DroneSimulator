@@ -269,11 +269,11 @@ public class SimulationWindow {
 	public void main() {
 		int map_num = 4;
 		Point[] startPoints = {
-				new Point(100,50),
-				new Point(50,60),
-				new Point(73,68),
-				new Point(84,73),
-				new Point(92,100)};
+				new Point(100,50,0),
+				new Point(50,60,0),
+				new Point(73,68,0),
+				new Point(84,73,0),
+				new Point(92,100,0)};
 		
 		Map map = new Map("C:\\Users\\עומרי\\IdeaProjects\\DroneSimulator\\Maps\\p1" + map_num + ".png",startPoints[map_num-1]);
 		

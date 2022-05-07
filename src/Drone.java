@@ -60,7 +60,8 @@ public class Drone {
 	public Point getPointOnMap() {
 		double x = startPoint.x + pointFromStart.x;
 		double y = startPoint.y + pointFromStart.y;
-		return new Point(x,y);
+		double orient = getGyroRotation();
+		return new Point(x,y,orient);
 	}
 	
 	public void update(int deltaTime) {
