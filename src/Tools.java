@@ -11,9 +11,8 @@ public class Tools {
 		double i= distance/WorldParams.CMPerPixel;
 		double xi = fromPoint.x + Math.cos(radians)*i;
 		double yi = fromPoint.y + Math.sin(radians)*i;
-		double orient = (fromPoint.orient + rotation) % 360;
-
-		return new Point(xi,yi,orient);
+		double or = Drone.formatRotation(fromPoint.orient + rotation);
+		return new Point(xi,yi,or);
 	}
 	
 	/*

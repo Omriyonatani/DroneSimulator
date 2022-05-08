@@ -30,7 +30,7 @@ public class Point {
 	public String toString() {
 		DecimalFormat df = new DecimalFormat("#.###");
 		
-		return "(" + df.format(x) + "," + df.format(y) + ")";
+		return "(" + df.format(x) + "," + df.format(y) + "," + df.format(orient) + ")";
 	}
 
 }

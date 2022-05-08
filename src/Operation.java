@@ -1,9 +1,7 @@
-import java.text.DecimalFormat;
-
 public class Operation {
 	OperationType t;
 	Point nextPoint;
-	final double eps = 0.01;
+	final double eps = 4;
 
 	public Operation(OperationType t, Point target) {
 		this.t = t;
@@ -17,12 +15,17 @@ public class Operation {
 			}
 			return false;
 		} else if (t == OperationType.rotating) {
-			if (Math.abs(p.orient - nextPoint.orient) <= eps) {
+			System.out.println("drone: " + p.toString() + ", expected: " + nextPoint.toString());
+			if (p.orient > nextPoint.orient + eps/2 || p.orient < nextPoint.orient -eps/2) {
 				return true;
 			}
 			return false;
 		}
 		return false;
+	}
+	@Override
+	public String toString() {
+		return "(" + t + ", " + nextPoint.toString() + ")";
 	}
 
 }

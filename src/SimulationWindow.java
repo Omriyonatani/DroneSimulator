@@ -275,7 +275,7 @@ public class SimulationWindow {
 				new Point(84,73,0),
 				new Point(92,100,0)};
 		
-		Map map = new Map("C:\\Users\\עומרי\\IdeaProjects\\DroneSimulator\\Maps\\p1" + map_num + ".png",startPoints[map_num-1]);
+		Map map = new Map("Maps/p1" + map_num + ".png",startPoints[map_num-1]);
 		
 		algo1 = new AutoDrone(map);
 		

@@ -8,19 +8,23 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.System.exit;
+
 public class Drone {
 	private double gyroRotation;
 	private Point sensorOpticalFlow;
+	private long battery;
 	
 	private Point pointFromStart;
 	public Point startPoint;
 	public List<Lidar> lidars;
-	private String drone_img_path = "C:\\Users\\עומרי\\IdeaProjects\\DroneSimulator\\Maps\\drone_3_pixels.png";
+	private String drone_img_path = "Maps/drone_3_pixels.png";
 	public Map realMap;
 	private double rotation;
 	private double speed;
 	private CPU cpu;
 	private PID pid;
+
 
 	public Drone(Map realMap) {
 		// Locations
@@ -29,6 +33,7 @@ public class Drone {
 		pointFromStart = new Point();
 
 		// Sensor
+		battery = 0;
 		sensorOpticalFlow = new Point();
 		lidars = new ArrayList<>();
 		speed = 0.2;
@@ -65,6 +70,10 @@ public class Drone {
 	}
 	
 	public void update(int deltaTime) {
+		battery = 480000 - cpu.getElapsedMilli();
+		if (battery < 0) {
+			exit(1);
+		}
 		double distancedMoved = (speed*100)*((double)deltaTime/1000);
 		pointFromStart =  Tools.getPointByDistance(pointFromStart, rotation, distancedMoved);
 		double noiseToDistance = Tools.noiseBetween(WorldParams.min_motion_accuracy,WorldParams.max_motion_accuracy,false);
@@ -78,6 +87,7 @@ public class Drone {
 		double milli_per_minute = 60000;
 		gyroRotation += (1-noiseToRotation)*deltaTime/milli_per_minute;
 		gyroRotation = formatRotation(gyroRotation);
+		sensorOpticalFlow.orient = getGyroRotation();
 	}
 	
 	public static double formatRotation(double rotationValue) {
@@ -97,10 +107,14 @@ public class Drone {
 	}
 	
 	public Point getOpticalSensorLocation() {
-		return new Point(sensorOpticalFlow);
+		var tmp = new Point(sensorOpticalFlow);
+		tmp.orient = this.getGyroRotation();
+		return tmp;
 	}
 
-	
+	public long getBattery() {
+		return battery;
+	}
 	public void rotateLeft(int deltaTime) {
 		double rotationChanged = WorldParams.rotation_per_second*deltaTime/1000;
 		

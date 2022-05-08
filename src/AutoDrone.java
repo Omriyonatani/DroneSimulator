@@ -6,7 +6,7 @@ public class AutoDrone {
 
     int map_size = 3000;
     enum PixelState {blocked,explored,unexplored,visited};
-    ArrayList<Operation> Operations = new ArrayList<Operation>();
+    ArrayList<Operation> operations;
     PixelState map[][];
     Drone drone;
     Point droneStartingPoint;
@@ -38,12 +38,19 @@ public class AutoDrone {
     boolean start_return_home = false;
     Point init_point;
     double maxLidarDistance = 300; //3 Meter
+    boolean hugLeftWall;
+    int timesTurned;
+    double orient;
 
 
     public AutoDrone(Map realMap) {
         degrees_left = new ArrayList<>();
         degrees_left_func =  new ArrayList<>();
         points = new ArrayList<Point>();
+        operations = new ArrayList<>();
+        hugLeftWall = true;
+        timesTurned = 0;
+        orient = 0;
 
         drone = new Drone(realMap);
         drone.addLidar(0);
@@ -190,18 +197,136 @@ public class AutoDrone {
             return;
         }
 
-        if(!Operations.get(0).isFinished(drone.getOpticalSensorLocation())){
+//        if (!operations.isEmpty()) {
+//            Operation o = operations.get(0);
+//            System.out.println(o);
+//            if (o.isFinished(drone.getOpticalSensorLocation())) {
+//                operations.remove(0);
+//            }
+//            return;
+//        }
+        if (!(orient > drone.getGyroRotation() && Drone.formatRotation(orient-drone.getGyroRotation()) > -2 && Drone.formatRotation(orient-drone.getGyroRotation()) < 2)) {
+           return; //dismiss
+        }
+        speedUp();
+        Lidar lidarF = drone.lidars.get(0);
+        Lidar lidarR = drone.lidars.get(1);
+        Lidar lidarL = drone.lidars.get(2);
+        if (lidarF.getDistance(deltaTime) < 200) {
+            speedDown();
+            spinBy(45);
+//            Point target = drone.getOpticalSensorLocation();
+//            Operation op = new Operation(OperationType.flying, Tools.getPointByDistance(drone.getOpticalSensorLocation(), 45, 0));
+//            operations.add(op);
+
+        }
+        /*
+        if (lidarL.getDistance(deltaTime) > maxLidarDistance) {
+            speedDown();
+            spinBy(-45);
+            Point target = drone.getOpticalSensorLocation();
+            Operation op = new Operation(OperationType.flying, Tools.getPointByDistance(drone.getOpticalSensorLocation(), -45, 0));
+            operations.add(op);
+        }
+        */
+
+        /*
+        System.out.println("drone: " +drone.getOpticalSensorLocation().toString() + ", gyro: " + drone.getGyroRotation());
+        if (!operations.isEmpty()) {
+            Operation running = operations.get(0);
+            if (!running.isFinished(drone.getOpticalSensorLocation())) {
+                System.out.println("not finished" + operations.get(0).toString());
+                //speedDown();
+                if (running.t == OperationType.flying && Math.abs(running.nextPoint.orient - drone.getGyroRotation()) < 0.5) {
+                    operations.remove(0);
+                }
+            } else {
+                operations.remove(0);
+                //speedUp();
+            }
             return;
-        }else{
-            Operations.remove(0);
         }
 
-        Lidar lidarF = drone.lidars.get(0);
-        speedUp();
 
+        Lidar lidarF = drone.lidars.get(0);
+        Lidar lidarR = drone.lidars.get(1);
+        Lidar lidarL = drone.lidars.get(2);
+        if (hugLeftWall) {
+            if (lidarL.getDistance(deltaTime) < 250) {
+                if (lidarF.getDistance(deltaTime) > 200) {
+                    speedUp();
+                    Point target = drone.getOpticalSensorLocation();
+                    Operation op = new Operation(OperationType.flying, Tools.getPointByDistance(drone.getOpticalSensorLocation(), 0, 50));
+                    operations.add(op);
+                    return;
+                }else {
+                    spinBy(90); // right
+                    Point newPoint = new Point(drone.getOpticalSensorLocation());
+                    newPoint.orient = Drone.formatRotation(newPoint.orient + 90);
+                    Operation op = new Operation(OperationType.rotating, newPoint);
+                    operations.add(op);
+                    return;
+                }
+            }else {
+                if (lidarR.getDistance(deltaTime) < lidarL.getDistance(deltaTime) && lidarL.getDistance(deltaTime) > 50) {
+                    spinBy(-90); // left
+                    Point newPoint = new Point(drone.getOpticalSensorLocation());
+                    newPoint.orient = Drone.formatRotation(newPoint.orient - 90);
+                    Operation op = new Operation(OperationType.rotating, newPoint);
+                    operations.add(op);
+                    return;
+                }
+            }
+        }
+
+         */
+        /*
+        if (lidarF.getDistance(deltaTime) > maxLidarDistance) {
+            speedUp();
+        }else if (lidarF.getDistance(deltaTime) < 50){
+            speedDown();
+            if (lidarR.getDistance(deltaTime) < lidarL.getDistance(deltaTime) && lidarL.getDistance(deltaTime) > 0.5) {
+                spinBy(-90); // left
+                Point newPoint = new Point(drone.getOpticalSensorLocation());
+                newPoint.orient = Drone.formatRotation(newPoint.orient - 90);
+                Operation op = new Operation(OperationType.rotating, newPoint);
+                operations.add(op);
+                return;
+            }
+            if (lidarR.getDistance(deltaTime) > lidarL.getDistance(deltaTime) && lidarR.getDistance(deltaTime) > 0.5) {
+                spinBy(90); // right
+                Point newPoint = new Point(drone.getOpticalSensorLocation());
+                newPoint.orient = Drone.formatRotation(newPoint.orient + 90);
+                Operation op = new Operation(OperationType.rotating, newPoint);
+                operations.add(op);
+                return;
+            }
+        }else {
+            if (lidarR.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
+                if (lidarF.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
+                    spinBy(-30); // left
+                    Point newPoint = new Point(drone.getOpticalSensorLocation());
+                    newPoint.orient = Drone.formatRotation(newPoint.orient - 30);
+                    Operation op = new Operation(OperationType.rotating, newPoint);
+                    operations.add(op);
+                    return;
+                }
+            } else {
+                if (lidarF.getDistance(deltaTime) < lidarR.getDistance(deltaTime)) {
+                    spinBy(30);
+                    Point newPoint = new Point(drone.getOpticalSensorLocation());
+                    newPoint.orient = Drone.formatRotation(newPoint.orient + 30);
+                    Operation op = new Operation(OperationType.rotating, newPoint);
+                    operations.add(op);
+                    return;
+                }
+            }
+        }
+        */
+        /*
         // if the Lidar is getting low distance- check right and left options
         if (lidarF.getDistance(deltaTime) < maxLidarDistance) {
-//            speedDown();
+            //speedDown();
             Lidar lidarR = drone.lidars.get(1);
             double right = lidarR.current_distance;
 
@@ -212,19 +337,30 @@ public class AutoDrone {
             // find max Front, Left and Right
             if (lidarR.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
                 if (lidarF.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
+                    speedDown();
                     spinBy(-45); // left
                     Point newPoint = new Point(drone.getOpticalSensorLocation());
                     newPoint.orient -= 45;
-                    Operation op = new Operation(OperationType.rotating,newPoint);
-                    Operations.add(op);
+                    Operation op = new Operation(OperationType.rotating, newPoint);
+                    operations.add(op);
                 }
-            }else if (lidarF.getDistance(deltaTime) < lidarR.getDistance(deltaTime)){
+            } else if (lidarF.getDistance(deltaTime) < lidarR.getDistance(deltaTime)) {
+                speedDown();
                 spinBy(45);
                 Point newPoint = new Point(drone.getOpticalSensorLocation());
                 newPoint.orient += 45;
-                Operation op = new Operation(OperationType.rotating,newPoint);
-                Operations.add(op);
+                Operation op = new Operation(OperationType.rotating, newPoint);
+                operations.add(op);
+            } else {
+                Point newPoint = new Point(drone.getOpticalSensorLocation());
+                newPoint.x += Math.cos(newPoint.orient);
+                newPoint.y += Math.sin(newPoint.orient);
+                Operation op = new Operation(OperationType.flying, newPoint);
+                operations.add(op);
             }
+        }
+
+         */
 
 
 
@@ -247,8 +383,7 @@ public class AutoDrone {
 
 
 
-
-
+            /*
             // Find the max distance direction (Front, Left, Right)
             if (lidarF.getDistance(deltaTime) > lidarR.getDistance(deltaTime)) {
                 if (lidarF.getDistance(deltaTime) < lidarL.getDistance(deltaTime)) {
@@ -282,7 +417,9 @@ public class AutoDrone {
 
                 }
             }
-        }  //else {
+
+             */
+        //}  //else {
 ////            // continue straight 2.5 Meters..
 ////            Point dronePoint = drone.getOpticalSensorLocation();
 ////            Point nextPoint = new Point(dronePoint.x + 250, dronePoint.y,drone.getGyroRotation()); // go 2.5 Meters to the front
